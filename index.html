@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoCAD AI BOM Extractor | Engineering System</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-glow glow-1"></div>
+    <div class="background-glow glow-2"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-cube"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>AutoCAD <span class="gradient-text">AI BOM</span> Extractor</h1>
+                    <p class="subtitle">Hệ thống bóc tách khối lượng dự toán cơ khí tự động hóa bằng AI & RAG</p>
+                </div>
+            </div>
+            <div class="header-badges">
+                <span class="badge badge-purple"><i class="fa-solid fa-brain"></i> Qwen2.5 Engine</span>
+                <span class="badge badge-amber"><i class="fa-solid fa-bolt"></i> Fast Pipeline</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="workspace-grid">
+            <!-- Left: Upload & Pipeline Tracker -->
+            <section class="control-panel glass-card">
+                <h2 class="panel-title"><i class="fa-solid fa-cloud-arrow-up"></i> Nạp Bản Vẽ Kỹ Thuật</h2>
+                
+                <div class="dropzone" id="dropzone">
+                    <input type="file" id="fileInput" accept=".dwg,.dxf" hidden>
+                    <div class="dropzone-content">
+                        <div class="upload-icon-circle">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                        </div>
+                        <h3>Kéo thả file CAD vào đây</h3>
+                        <p class="dropzone-sub">Hỗ trợ định dạng <strong>.DWG</strong> hoặc <strong>.DXF</strong> (AutoCAD Mechanical, Bồn nước, Rotary...)</p>
+                        <button class="btn btn-outline" type="button" onclick="document.getElementById('fileInput').click()">
+                            <i class="fa-regular fa-folder-open"></i> Duyệt File
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selected File Info -->
+                <div class="file-card" id="fileCard" style="display: none;">
+                    <div class="file-icon"><i class="fa-solid fa-file-lines"></i></div>
+                    <div class="file-details">
+                        <span class="file-name" id="fileName">drawing.dwg</span>
+                        <span class="file-size" id="fileSize">0 KB</span>
+                    </div>
+                    <button class="remove-btn" id="removeFileBtn" title="Xóa file"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <!-- Action Button -->
+                <button class="btn btn-primary" id="processBtn" disabled>
+                    <i class="fa-solid fa-microchip"></i> Bóc Tách Khối Lượng BOM
+                </button>
+
+                <!-- Processing Stepper -->
+                <div class="stepper-wrapper" id="stepperWrapper" style="display: none;">
+                    <div class="step-item" id="step1">
+                        <div class="step-indicator"><i class="fa-solid fa-vector-square"></i></div>
+                        <div class="step-content">
+                            <h4>Quét thực thể CAD</h4>
+                            <p>ODA & ezdxf quét TEXT, MTEXT, ATTRIB, TABLE</p>
+                        </div>
+                    </div>
+                    <div class="step-item" id="step2">
+                        <div class="step-indicator"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="step-content">
+                            <h4>Vector RAG Catalog</h4>
+                            <p>Đối chiếu mác thép & tiêu chuẩn phôi Martech</p>
+                        </div>
+                    </div>
+                    <div class="step-item" id="step3">
+                        <div class="step-indicator"><i class="fa-solid fa-brain"></i></div>
+                        <div class="step-content">
+                            <h4>Suy luận AI Qwen 3B</h4>
+                            <p>Bóc tách 3 chiều Dài - Rộng - Cao & quy cách</p>
+                        </div>
+                    </div>
+                    <div class="step-item" id="step4">
+                        <div class="step-indicator"><i class="fa-solid fa-file-excel"></i></div>
+                        <div class="step-content">
+                            <h4>Xuất Bảng Dự Toán</h4>
+                            <p>Tính toán Kg thép, Diện tích sơn & tạo file Excel</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right: Live Dashboard & Table Preview -->
+            <section class="results-panel glass-card">
+                <div class="panel-header">
+                    <h2 class="panel-title"><i class="fa-solid fa-table-list"></i> Bảng Kết Quả Dự Toán (11 Cột)</h2>
+                    <div class="export-actions">
+                        <button class="btn btn-download" id="downloadBtn" style="display: none;">
+                            <i class="fa-solid fa-file-arrow-down"></i> Tải File Excel (.xlsx)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stat Counters -->
+                <div class="metrics-grid" id="metricsGrid" style="display: none;">
+                    <div class="metric-card">
+                        <div class="metric-icon purple"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-label">Tổng Chi Tiết Bóc Được</span>
+                            <span class="metric-value" id="metricTotalItems">0</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon amber"><i class="fa-solid fa-weight-hanging"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-label">Tổng Khối Lượng Phôi</span>
+                            <span class="metric-value" id="metricTotalWeight">0.0 <small>KG</small></span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon purple-amber"><i class="fa-solid fa-paint-roller"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-label">Tổng Diện Tích Sơn</span>
+                            <span class="metric-value" id="metricTotalPaint">0.00 <small>m²</small></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Preview Table Container -->
+                <div class="table-container" id="tableContainer">
+                    <div class="empty-state" id="emptyState">
+                        <i class="fa-solid fa-diagram-project"></i>
+                        <h3>Chưa có dữ liệu bản vẽ</h3>
+                        <p>Vui lòng tải bản vẽ CAD (.dwg/.dxf) ở bảng bên trái và nhấn Bóc tách.</p>
+                    </div>
+                    
+                    <table class="bom-table" id="bomTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">STT</th>
+                                <th style="width: 90px;">Mã VT</th>
+                                <th style="width: 170px;">Tên Vật Tư</th>
+                                <th>Mô Tả Quy Cách</th>
+                                <th style="width: 90px;">Dài (mm)</th>
+                                <th style="width: 90px;">Rộng (mm)</th>
+                                <th style="width: 80px;">Dày/Cao</th>
+                                <th style="width: 60px;">ĐVT</th>
+                                <th style="width: 60px;">SL</th>
+                                <th style="width: 110px;">Khối Lượng</th>
+                                <th style="width: 100px;">DT Sơn</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bomTableBody">
+                            <!-- Dữ liệu render động tại đây -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
