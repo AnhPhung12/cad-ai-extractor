@@ -4,7 +4,7 @@
  */
 
 // Cấu hình Base URL API Backend
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://cad-ai-extractor.onrender.com";
 
 // DOM Elements: Khu vực Upload & Điều khiển
 const dropzone = document.getElementById("dropzone");
